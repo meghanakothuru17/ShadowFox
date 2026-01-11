@@ -1,0 +1,25 @@
+# Keyword Extractor Project
+
+## Description
+The Keyword Extractor project is designed to extract important keywords from text or documents using a frontend interface and a Python backend. 
+It helps users quickly identify key points from large text content, making text analysis easier and faster.
+
+## Folder Structure
+- `frontend/` : Contains HTML, CSS, and JavaScript files for the user interface.
+- `backend/` : Contains Python scripts to process text and extract keywords.
+
+## Features
+- Upload or input text in the frontend
+- Extracts important keywords using the Python backend
+- Displays extracted keywords in the frontend
+- Easy-to-use and interactive interface
+
+## Technologies Used
+- Frontend: HTML, CSS, JavaScript
+- Backend: Python
+
+## How to Run
+1. Clone the repository
+2. Navigate to the `backend/` folder and install any required libraries:
+   ```bash
+   pip install -r requirements.txt

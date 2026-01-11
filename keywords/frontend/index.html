@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyword Extractor</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .loading-section {
+            padding: 60px;
+            text-align: center;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .results-section {
+            padding: 40px;
+            display: none;
+        }
+
+        .file-info {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .file-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-stats {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .keywords-title {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .keywords-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .keyword-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color:white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-section {
+            padding: 40px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        .error-text {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-section, .results-section {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 40px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Keyword Extractor</h1>
+            <p>Extract meaningful keywords from your documents</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div id="uploadArea" class="upload-area">
+                <div class="upload-icon"></div>
+                <div class="upload-text">Drop your file here or click to browse</div>
+                <div class="upload-hint">Supports PDF, DOCX, TXT, MD, XLSX files (max 10MB)</div>
+            </div>
+            <input type="file" id="fileInput" class="file-input" accept=".pdf,.docx,.doc,.txt,.md,.xlsx,.xls">
+        </div>
+
+        <!-- Loading Section -->
+        <div id="loadingSection" class="loading-section">
+            <div class="spinner"></div>
+            <div class="loading-text">Processing your document...</div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section">
+            <div class="file-info">
+                <div id="fileName" class="file-name">document.pdf</div>
+                <div id="fileStats" class="file-stats">1,234 words • 25 keywords extracted</div>
+            </div>
+            
+            <div class="keywords-title">Extracted Keywords</div>
+            <div id="keywordsContainer" class="keywords-container">
+                <!-- Keywords will be populated here -->
+            </div>
+            
+            <button id="newFileBtn" class="btn">Process New File</button>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorSection" class="error-section">
+            <div class="error-icon"></div>
+            <div id="errorText" class="error-text">Something went wrong...</div>
+            <button id="retryBtn" class="btn">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorSection = document.getElementById('errorSection');
+        const uploadSection = document.querySelector('.upload-section');
+        const keywordsContainer = document.getElementById('keywordsContainer');
+        const fileName = document.getElementById('fileName');
+        const fileStats = document.getElementById('fileStats');
+        const errorText = document.getElementById('errorText');
+        const newFileBtn = document.getElementById('newFileBtn');
+        const retryBtn = document.getElementById('retryBtn');
+
+        // Event Listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        newFileBtn.addEventListener('click', resetApp);
+        retryBtn.addEventListener('click', resetApp);
+
+        // Drag and Drop Handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        // File Selection Handler
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        // File Processing
+        async function processFile(file) {
+            // Validate file type
+            const allowedTypes = ['pdf', 'docx', 'doc', 'txt', 'md', 'xlsx', 'xls'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedTypes.includes(fileExtension)) {
+                showError(`Unsupported file type. Please upload: ${allowedTypes.join(', ')}`);
+                return;
+            }
+            
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('File size too large. Please upload files smaller than 10MB.');
+                return;
+            }
+            
+            // Show loading state
+            showLoading();
+            
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // Make API request
+                const response = await fetch(`${API_BASE_URL}/extract-keywords`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to process file');
+                }
+                
+                const data = await response.json();
+                
+                // Show results
+                showResults(data);
+                
+            } catch (error) {
+                console.error('Error processing file:', error);
+                showError(error.message || 'Failed to process file. Please try again.');
+            }
+        }
+
+        // UI State Management
+        function showLoading() {
+            uploadSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            loadingSection.style.display = 'block';
+        }
+
+        function showResults(data) {
+            // Hide other sections
+            uploadSection.style.display = 'none';
+            loadingSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            
+            // Update file info
+            fileName.textContent = `${data.filename}`;
+            fileStats.textContent = `${data.word_count} words • ${data.keyword_count} keywords extracted`;
+            
+            // Clear previous keywords
+            keywordsContainer.innerHTML = '';
+            
+            // Add keywords with animation
+            data.keywords.forEach((keyword, index) => {
+                const keywordElement = document.createElement('span');
+                keywordElement.className = 'keyword-tag';
+                keywordElement.textContent = keyword;
+                keywordElement.style.animationDelay = `${index * 0.1}s`;
+                keywordsContainer.appendChild(keywordElement);
+            });
+            
+            // Show results section
+            resultsSection.style.display = 'block';
+        }
+
+        function showError(message) {
+            uploadSection.style.display = 'none';
+            loadingSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            
+            errorText.textContent = message;
+            errorSection.style.display = 'block';
+        }
+
+        function resetApp() {
+            // Reset file input
+            fileInput.value = '';
+            
+            // Show upload section
+            uploadSection.style.display = 'block';
+            loadingSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            
+            // Clear any dragover state
+            uploadArea.classList.remove('dragover');
+        }
+
+        // Check API connection on load
+        async function checkAPIConnection() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (!response.ok) {
+                    throw new Error('API not responding');
+                }
+                console.log('API connection successful');
+            } catch (error) {
+                console.error('API connection failed:', error);
+                showError('Unable to connect to the server. Please make sure the backend is running.');
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Keyword Extractor initialized');
+            checkAPIConnection();
+        });
+
+        // Handle network errors
+        window.addEventListener('online', () => {
+            console.log('Back online');
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('Gone offline');
+            showError('No internet connection. Please check your network and try again.');
+        });
+    </script>
+</body>
+</html>
